@@ -26,7 +26,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Update with your client URL
+  origin: process.env.CLIENT_URL, // Update with your client URL
   credentials: true
 }));
 app.use(express.json());

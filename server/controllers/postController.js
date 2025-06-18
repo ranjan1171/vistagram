@@ -33,7 +33,7 @@ exports.createPost = async (req, res) => {
     // Respond with post data and a URL to fetch the image
     const responsePost = {
       ...savedPost.toObject(),
-      imageUrl: `http://localhost:5000/api/posts/${savedPost._id}/image`
+      imageUrl: `${process.env.SERVER_BASE_URL}/api/posts/${savedPost._id}/image`
     };
 
     res.status(201).json(responsePost);
@@ -49,7 +49,7 @@ exports.getPosts = async (req, res) => {
     const posts = await Post.find().sort({ timestamp: -1 });
     const postsWithImageUrl = posts.map(post => ({
       ...post.toObject(),
-      imageUrl: `http://localhost:5000/api/posts/${post._id}/image`
+      imageUrl: `${process.env.SERVER_BASE_URL}/api/posts/${post._id}/image`
     }));
     res.status(200).json(postsWithImageUrl);
   } catch (error) {
