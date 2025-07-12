@@ -1,60 +1,59 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Webcam from 'react-webcam';
 
-const CameraModal = ({ onCapture, onClose }) => {
+function CameraModal({ onCapture, onClose }) {
   const webcamRef = useRef(null);
   const [caption, setCaption] = useState('');
-  const [isCapturing, setIsCapturing] = useState(false);
+  const [imgSrc, setImgSrc] = useState(null);
 
-  const capture = async () => {
-    setIsCapturing(true);
-    try {
-      const imageSrc = webcamRef.current.getScreenshot();
-      if (!imageSrc) throw new Error('Failed to capture image');
-      
-      // Convert data URL to blob
-      const blob = await fetch(imageSrc).then(res => res.blob());
-      const file = new File([blob], `capture-${Date.now()}.jpg`, {
-        type: 'image/jpeg'
-      });
-      
-      onCapture(file, caption);
-    } catch (error) {
-      console.error('Capture error:', error);
-      alert('Failed to capture image. Please try again.');
-    } finally {
-      setIsCapturing(false);
-    }
+  const capture = () => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    setImgSrc(imageSrc);
+  };
+
+  const handleSave = () => {
+    if (!imgSrc) return;
+    // Convert base64 to File
+    const arr = imgSrc.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    const file = new File([u8arr], 'capture.jpg', { type: mime });
+    onCapture(file, caption);
   };
 
   return (
     <div className="camera-modal">
-      <button className="close-btn" onClick={onClose}>×</button>
-      <div className="camera-container">
-        <Webcam
-          audio={false}
-          ref={webcamRef}
-          screenshotFormat="image/jpeg"
-          videoConstraints={{ facingMode: 'user' }}
-          style={{ width: '100%' }}
-        />
+      <div className="modal-content">
+        {!imgSrc ? (
+          <>
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              width={400}
+            />
+            <button onClick={capture}>Capture</button>
+          </>
+        ) : (
+          <>
+            <img src={imgSrc} alt="Captured" width={400} />
+            <input
+              type="text"
+              placeholder="Enter caption"
+              value={caption}
+              onChange={e => setCaption(e.target.value)}
+            />
+            <button onClick={handleSave}>Save</button>
+            <button onClick={() => setImgSrc(null)}>Retake</button>
+          </>
+        )}
+        <button onClick={onClose}>Close</button>
       </div>
-      <input
-        type="text"
-        placeholder="Add a caption..."
-        value={caption}
-        onChange={(e) => setCaption(e.target.value)}
-        className="caption-input"
-      />
-      <button 
-        onClick={capture} 
-        disabled={isCapturing}
-        className="capture-btn"
-      >
-        {isCapturing ? 'Capturing...' : 'Capture Photo'}
-      </button>
     </div>
   );
-};
+}
 
 export default CameraModal;

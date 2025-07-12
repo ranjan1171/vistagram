@@ -5,7 +5,8 @@ const mongoose = require('mongoose');
 const postRoutes = require('./routes/postRoutes');
 
 const app = express();
-
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Database connection
 const connectDB = async () => {
   try {
@@ -26,7 +27,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL, // Update with your client URL
+  origin: 'http://localhost:5173', // Update with your client URL
   credentials: true
 }));
 app.use(express.json());

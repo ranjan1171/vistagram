@@ -7,17 +7,13 @@ const connectDB = async () => {
       throw new Error('MongoDB connection URI is not defined in environment variables');
     }
 
-    // Connection options
+    // Simplified connection options (removed problematic options)
     const options = {
       serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
       socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
       maxPoolSize: 10, // Maintain up to 10 socket connections
       retryWrites: true,
-      w: 'majority',
-      // Add these for better reliability
-      maxIdleTimeMS: 30000, // Close connections after 30s of inactivity
-      bufferMaxEntries: 0, // Disable mongoose buffering
-      bufferCommands: false, // Disable mongoose buffering for commands
+      w: 'majority'
     };
 
     const conn = await mongoose.connect(process.env.MONGO_URI, options);
@@ -37,8 +33,6 @@ const connectDB = async () => {
 
       mongoose.connection.on('disconnected', () => {
         console.log('Mongoose disconnected');
-        // Attempt to reconnect
-        console.log('Attempting to reconnect...');
       });
 
       mongoose.connection.on('reconnected', () => {
@@ -46,7 +40,7 @@ const connectDB = async () => {
       });
     }
 
-    // Graceful shutdown handlers - set up once
+    // Graceful shutdown handlers
     if (!process.listeners('SIGINT').some(listener => listener.name === 'mongooseShutdown')) {
       const mongooseShutdown = async () => {
         try {
@@ -59,7 +53,6 @@ const connectDB = async () => {
         }
       };
       
-      // Add name property for identification
       Object.defineProperty(mongooseShutdown, 'name', { value: 'mongooseShutdown' });
       
       process.on('SIGINT', mongooseShutdown);
@@ -91,13 +84,6 @@ const connectDB = async () => {
       console.error('Connection refused - MongoDB server may not be running');
     }
         
-    // In production, you might want to retry instead of exiting
-    if (process.env.NODE_ENV === 'production') {
-      console.error('Retrying connection in 5 seconds...');
-      setTimeout(() => connectDB(), 5000);
-      return null;
-    }
-    
     process.exit(1);
   }
 };

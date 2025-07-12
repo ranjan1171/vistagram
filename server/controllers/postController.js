@@ -1,116 +1,79 @@
-const Post = require('../models/Post');
-const fs = require('fs');
+
+
+// Create a new post with image
+
 const path = require('path');
 
-// CREATE POST (handles image upload)
+const Post = require('../models/Post');
+
 exports.createPost = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No image uploaded' });
+    const { username, caption } = req.body;
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
     }
-
-    // Read the uploaded file as a buffer
-    const imgPath = path.join(__dirname, '../uploads', req.file.filename);
-    const imgBuffer = fs.readFileSync(imgPath);
-
-    // Save post to DB
-    const newPost = new Post({
-      username: req.body.username || 'Anonymous',
-      image: {
-        data: imgBuffer,
-        contentType: req.file.mimetype
-      },
-      caption: req.body.caption || '',
-      likes: 0,
-      shares: 0
+    const post = new Post({
+      username,
+      caption,
+      imageUrl,
+      timestamp: new Date(),
     });
-
-    const savedPost = await newPost.save();
-
-    // Clean up uploaded file
-    fs.unlinkSync(imgPath);
-
-    // Respond with post data and a URL to fetch the image
-    const responsePost = {
-      ...savedPost.toObject(),
-      imageUrl: `${process.env.SERVER_BASE_URL}/api/posts/${savedPost._id}/image`
-    };
-
-    res.status(201).json(responsePost);
-  } catch (error) {
-    console.error('Create post error:', error);
-    res.status(500).json({ error: error.message });
+    await post.save();
+    res.status(201).json(post);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create post', details: err.message });
   }
 };
 
-// GET ALL POSTS (with imageUrl)
 exports.getPosts = async (req, res) => {
   try {
     const posts = await Post.find().sort({ timestamp: -1 });
-    const postsWithImageUrl = posts.map(post => ({
-      ...post.toObject(),
-      imageUrl: `${process.env.SERVER_BASE_URL}/api/posts/${post._id}/image`
-    }));
-    res.status(200).json(postsWithImageUrl);
-  } catch (error) {
-    console.error('Get posts error:', error);
-    res.status(500).json({ error: error.message });
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch posts', details: err.message });
   }
 };
-
-// Serve image buffer as file
+// Get post image by ID
 exports.getPostImage = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post || !post.image || !post.image.data) {
-      return res.status(404).send('Image not found');
+      return res.status(404).json({ error: 'Image not found' });
     }
-    res.set('Content-Type', post.image.contentType);
+    res.contentType(post.image.contentType);
     res.send(post.image.data);
-  } catch (error) {
-    console.error('Get image error:', error);
-    res.status(500).send('Error retrieving image');
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch image', details: err.message });
   }
 };
 
-// LIKE POST
+// Like a post
 exports.likePost = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-
-    post.likes += 1;
-    await post.save();
-
-    res.status(200).json({ 
-      message: 'Post liked successfully',
-      likes: post.likes 
-    });
-  } catch (error) {
-    console.error('Like post error:', error);
-    res.status(500).json({ error: error.message });
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { likes: 1 } },
+      { new: true }
+    );
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    res.json({ likes: post.likes });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to like post', details: err.message });
   }
 };
 
-// SHARE POST
+// Share a post
 exports.sharePost = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-
-    post.shares += 1;
-    await post.save();
-
-    res.status(200).json({ 
-      message: 'Post shared successfully',
-      shares: post.shares 
-    });
-  } catch (error) {
-    console.error('Share post error:', error);
-    res.status(500).json({ error: error.message });
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { shares: 1 } },
+      { new: true }
+    );
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    res.json({ shares: post.shares });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to share post', details: err.message });
   }
 };
