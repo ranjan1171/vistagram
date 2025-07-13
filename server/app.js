@@ -9,7 +9,7 @@ dotenv.config();
 
 // Middleware
 app.use(cors({
-  origin: 'https://vistagram-frontend.onrender.com',
+  origin: 'https://vistagram-3.onrender.com',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
   exposedHeaders: ['Content-Type'] // Add this line
