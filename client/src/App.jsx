@@ -13,26 +13,30 @@ function App() {
     fetchPosts();
   }, []);
 
-  const fetchPosts = async () => {
-    setLoading(true);
-    const response = await fetch('http://localhost:5000/api/posts');
-    const data = await response.json();
-    setPosts(Array.isArray(data) ? data : []);
-    setLoading(false);
-  };
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const IMAGE_BASE_URL = API_BASE_URL.replace('/api', '');
 
-  const handleCapture = async (imageFile, caption) => {
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    formData.append('caption', caption);
-    formData.append('username', 'User_' + Math.floor(Math.random() * 1000));
-    await fetch('http://localhost:5000/api/posts', {
-      method: 'POST',
-      body: formData,
-    });
-    setShowCamera(false);
-    fetchPosts();
-  };
+const fetchPosts = async () => {
+  setLoading(true);
+  const response = await fetch(`${API_BASE_URL}/posts`);
+  const data = await response.json();
+  setPosts(Array.isArray(data) ? data : []);
+  setLoading(false);
+};
+
+const handleCapture = async (imageFile, caption) => {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  formData.append('caption', caption);
+  formData.append('username', 'User_' + Math.floor(Math.random() * 1000));
+  await fetch(`${API_BASE_URL}/posts`, {
+    method: 'POST',
+    body: formData,
+  });
+  setShowCamera(false);
+  fetchPosts();
+};
+
 
   const handleLike = async (postId) => {
     await likePost(postId);
@@ -64,17 +68,17 @@ function App() {
           <div>Loading...</div>
         ) : (
  posts.map(post => (
-  <Post
-    key={post._id}
-    post={{
-      ...post,
-      imageUrl: post.imageUrl && post.imageUrl.startsWith('/uploads/')
-        ? `http://localhost:5000${post.imageUrl}`
-        : 'https://via.placeholder.com/500x300?text=No+Image'
-    }}
-    onLike={handleLike}
-    onShare={handleShare}
-  />
+ <Post
+  key={post._id}
+  post={{
+    ...post,
+    imageUrl: post.imageUrl && post.imageUrl.startsWith('/uploads/')
+      ? `${IMAGE_BASE_URL}${post.imageUrl}`
+      : 'https://via.placeholder.com/500x300?text=No+Image'
+  }}
+  onLike={handleLike}
+  onShare={handleShare}
+/>
 ))
         )}
       </div>
