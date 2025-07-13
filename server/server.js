@@ -1,16 +1,18 @@
-require('dotenv').config(); // Load environment variables first
+// Load environment variables first
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 const postRoutes = require('./routes/postRoutes');
-import dotenv from 'dotenv';
-dotenv.config();
-
 
 const app = express();
-const path = require('path');
+
+// Serve static files from the uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-// Database connection
+
+// MongoDB connection
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI, {
@@ -30,7 +32,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: 'https://vistagram-frontend.onrender.com', // Update with your client URL
+  origin: 'https://vistagram-frontend.onrender.com', // Adjust if needed
   credentials: true
 }));
 app.use(express.json());
@@ -39,34 +41,34 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/posts', postRoutes);
 
-// Health check endpoint
+// Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK' });
 });
 
-// 404 handler
+// 404 Handler
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
   console.error('Server error:', err.stack);
-  
-  // Handle Multer errors specifically
+
   if (err.name === 'MulterError') {
-    return res.status(400).json({ 
+    return res.status(400).json({
       error: 'File upload error',
-      message: err.message 
+      message: err.message
     });
   }
-  
-  res.status(500).json({ 
+
+  res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
 
+// Start server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
@@ -78,7 +80,7 @@ process.on('unhandledRejection', (err) => {
   server.close(() => process.exit(1));
 });
 
-// Handle SIGTERM for graceful shutdown
+// Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully');
   server.close(() => {
