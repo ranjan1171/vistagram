@@ -3,6 +3,9 @@ const cors = require('cors');
 const postRoutes = require('./routes/postRoutes');
 const path = require('path');
 const app = express();
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 // Middleware
 app.use(cors({
