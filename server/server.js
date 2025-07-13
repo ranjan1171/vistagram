@@ -27,7 +27,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Update with your client URL
+  origin: 'https://vistagram-frontend.onrender.com', // Update with your client URL
   credentials: true
 }));
 app.use(express.json());
