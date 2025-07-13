@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const postRoutes = require('./routes/postRoutes');
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 const app = express();
 const path = require('path');
