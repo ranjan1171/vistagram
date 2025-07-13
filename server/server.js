@@ -32,7 +32,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: 'https://vistagram-frontend.onrender.com', // Adjust if needed
+  origin: 'https://vistagram-4.onrender.com', // Adjust if needed
   credentials: true
 }));
 app.use(express.json());
